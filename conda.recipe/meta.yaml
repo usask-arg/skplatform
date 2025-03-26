@@ -31,8 +31,10 @@ test:
     - skplatform
   requires:
     - pytest
+  source_files:
+    - src
   commands:
-    - pytest skplatform.tests
+    - pytest
 
 about:
   home: HOME_PAGE_URL
