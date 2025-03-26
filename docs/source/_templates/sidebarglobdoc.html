@@ -1,0 +1,13 @@
+<a href="{{ pathto(master_doc) }}" class="icon icon-home">
+<img src="{{ pathto( '_static/usask-'+ project +'-logo2.ico', 1) }}" class="logo" alt="{{ _('Logo') }}"/>
+</a>
+<br>
+{%- set nav_version = version %}
+{% if nav_version %}
+<div class="version" >
+{{ nav_version }}
+</div>
+{% endif %}
+<br>
+
+{{ toctree(maxdepth=theme_globaltoc_depth|toint, collapse=False, includehidden=theme_globaltoc_includehidden|tobool) }}

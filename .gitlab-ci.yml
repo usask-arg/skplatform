@@ -1,0 +1,97 @@
+image: continuumio/anaconda3
+stages:
+  - build_wheel
+  - test_and_docs
+  - deploy
+
+variables:
+  OUTPUT_WHEEL_DIR: /www/wheels/
+  
+# ---------------------------------------------------
+# Build wheel on Linux
+# ---------------------------------------------------
+
+build_wheel_linux:
+  stage: build_wheel
+  tags:
+    - docker
+  script:
+    - echo "Building wheel for project ${CI_PROJECT_TITLE}"
+    - conda init bash
+    - source /root/.bashrc
+    - conda create -n wheelbuild python=3.11 setuptools build
+    - conda activate wheelbuild
+    - python -m build --wheel
+  artifacts:
+    paths:
+      - dist/
+    expire_in: 1 day
+
+# ---------------------------------------------------
+# Test and document code on Linux
+# ---------------------------------------------------
+
+test-linux:
+  stage: test_and_docs
+  tags:
+  - docker
+  allow_failure: false
+  script:
+    - conda init bash
+    - conda env create --file env.yml -n builddocs  -q
+    - source activate builddocs
+    - apt update
+    - apt install make -y
+    - pip install skplatform -f ./dist
+    - pycodestyle
+    - cd docs
+    - make html
+    - cd ../
+    - python -m unittest discover -s ./src/${CI_PROJECT_TITLE} -t ./
+  artifacts:
+    paths:
+      - docs/_build/
+    expire_in: 1 day
+
+# ---------------------------------------------------
+# Deploy HTML using the Gitlab Pages
+# ---------------------------------------------------
+
+pages:
+  stage: deploy
+#  only:
+#    - main
+  tags:
+    - docker
+  script:
+    - mkdir -p public
+    - cp -r docs/_build/html/* public/
+  artifacts:
+    paths:
+      - public
+
+# ---------------------------------------------------
+# Deploy the wheels for un-tagged versions. Send it to the wheels/dev folder
+# ---------------------------------------------------
+
+deploy-release:
+  stage: deploy
+  except:
+    - tags
+  tags:
+    - docker
+  script:
+    -  cp dist/*.whl $OUTPUT_WHEEL_DIR/dev/
+
+# ---------------------------------------------------
+# Deploy the wheels for tagged versions. Send it to the wheels folder
+# ---------------------------------------------------
+
+deploy-tagged:
+  stage: deploy
+  only:
+    - tags
+  tags:
+    - docker
+  script:
+    - cp dist/*.whl $OUTPUT_WHEEL_DIR

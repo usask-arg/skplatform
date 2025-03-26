@@ -4,7 +4,7 @@
 {% set py_version = environ['CONDA_PY'] %}
 
 package:
-  name: usask_arg_example
+  name: skplatform
   version: {{ version }}
 
 source:
@@ -28,13 +28,11 @@ requirements:
 
 test:
   imports:
-    - usask_arg_example
+    - skplatform
   requires:
     - pytest
-  source_files:
-    - tests
   commands:
-    - pytest tests
+    - pytest skplatform.tests
 
 about:
   home: HOME_PAGE_URL
