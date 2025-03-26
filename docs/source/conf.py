@@ -2,7 +2,11 @@
 import os
 import re
 import sys
-import skplatform
+
+try:
+    from skplatform._version import __version__
+except:
+    __version__ = '??'
 
 # Minimum version, enforced by sphinx
 needs_sphinx = '3.2.0'
@@ -43,11 +47,12 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'skplatform'
-copyright = '2024, ARG University Of Saskatchewan'
+copyright = '2025, ARG University Of Saskatchewan'
 author = 'USASK-ARG'
 
 # The short X.Y version.
-version = ''            # "0.1.0"
+version = __version__
+# "0.1.0"
 # The full version, including alpha/beta/rc tags.
 release = ''
 
@@ -78,15 +83,17 @@ add_module_names = False
 
 language = 'en'
 html_theme = 'pydata_sphinx_theme'
-html_logo = '_static/skproject-logo.png'
-html_static_path = ["_static", "_assets"]
+logo_name = 'skproject-logo.png'
+html_logo ='_static/{}'.format(logo_name)
+html_static_path = ["_static"]
 html_favicon = "_static/usask-arg_icon_32.ico"
 html_theme_options = {
-    "icon_links": [{"name": "Gitlab",
+   "icon_links": [ {"name": "Github",
                     "url": "https://github.com/usask-arg/skplatform",
                     "icon": "fas fa-code-branch"
                     },
-                   ]
+                   ],
+    "logo": { "image_light": logo_name, "image_dark": logo_name, 'text':'{}'.format(version)}
 }
 
 # -- Options for LaTeX output ---------------------------------------------
