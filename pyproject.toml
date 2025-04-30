@@ -2,7 +2,7 @@
 [project]
 name = "skplatform"
 description="Attitude solutions for optical, remote sensing instruments  flying on, or simulating, balloons, aircraft and satellites"
-dependencies = ["numpy", "sktimeutils >= 2.0.9", "skconfig >= 0.3.5",  "sgp4 >= 2.9", "jplephem", "astropy"]
+dependencies = ["numpy", "sktimeutils >= 2.0.9", "skconfig >= 0.3.5",  "sgp4 >= 2.9", "jplephem", "astropy", "xarray"]
 readme = "README.md"
 license = {text = "MIT"}
 authors=[{name='Nick Lloyd', email = "nick.lloyd@usask.ca"}]

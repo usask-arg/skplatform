@@ -1,6 +1,8 @@
 # skplatform #
 This package is used for the attitude solution of optical instruments remote sensing the atmosphere from space,
-balloons, aircraft or the ground. The package can be used to generate lines of sight for simulations or real instruments. 
+balloons, aircraft or the ground. The package can be used to generate lines of sight for simulations or real instruments.
+A simple interface for simulating satellite based instruments, supporting scripting and integration with integration
+with [hawksimulator](https://github.com/usask-arg/hawc-simulator), is included as a submodule.
 
 ## Installation
 
@@ -19,7 +21,7 @@ Documentation can be found at ReadTheDocs [skplatform](https://skplatform.readth
 
     python -m unittest discover -s skplatform.tests
 
-The tests take around 90 seconds to run, so be patient. 
+The tests take around 90 seconds to run, so be patient.
 
 ## License
 This project is licensed under the MIT license.
