@@ -10,6 +10,7 @@ user chooses which technique they wish to use, see table below.
 
 The following positioning techniques are provided with the ``skplatform`` package,
 
+
 =============================== ========================================================================================================
 Position Technique              Description
 =============================== ========================================================================================================

@@ -70,7 +70,7 @@ def _technique_set_platform_position_from_orbit_plane_angle(platform: Platform,
         bearingfunc._geo.from_xyz(obs)
         latitude = bearingfunc._geo.latitude                                                                            # Get the latitude of the observer location
         longitude = bearingfunc._geo.longitude                                                                          # Get the longitude of the observer position
-        platform.platform_pointing.set_platform_location(latlonheightandt=(latitude, longitude, observer_height, ut))            # But get the height from the user defined value so it is bang on.
+        platform.acs.set_platform_location(latlonheight=(latitude, longitude, observer_height, ut))            # But get the height from the user defined value so it is bang on.
     if not converged:
         logging.warning('technique_set_platform_position_from_observer_looking_at_llh, cannot find observer position that matches the bearing requiremenets')
     return converged

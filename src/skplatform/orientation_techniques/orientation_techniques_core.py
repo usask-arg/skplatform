@@ -63,10 +63,10 @@ class PointingAlgorithms:
           observer: np.ndarray[3,]
             The x,y,z location of the observer in meters in the :ref:`ecef` reference frame.
           target_tangent_altitude : float
-            The tangent altitude of the target location in meteres above sea-level. The tangent altitude  must be below the
+            The tangent altitude of the target location in meters above sea-level. The tangent altitude  must be below the
             observer and above 5 km below the ground otherwise it is not used.
           target_geographic_bearing: float
-            The geographic bearing in degrres of the tangent altitude measured the current platform location. N=0, E=90, S=180, W=270.
+            The geographic bearing in degrees of the tangent altitude measured the current platform location. N=0, E=90, S=180, W=270.
           roll_control: str
             The string describing roll control, see: :ref:`rollcontrol`
           roll_angle_degrees: float
@@ -86,7 +86,7 @@ class PointingAlgorithms:
             look = self._geo.xyz_lookvector_from_tangent_altitude(target_tangent_altitude, observer, horiz)
             target = self._geo.xyz_tangent_point_location(observer, look)
             G = self.apply_roll_control(look, target, observer, roll_control, roll_angle_degrees, horizontalunitvector=horiz)
-            self.platform.platform_pointing.force_pcf_rotation_matrix(G)
+            self.platform.acs.force_pcf_rotation_matrix(G)
         else:
             logging.warning("PointingAlgorithms.set_limb_boresight_to_look_at_tangent_altitude, the target altitude {} is not between the observer altitude {} and 5 km below the ground".format(target_tangent_altitude, maxaltitude))
         return ok
@@ -124,7 +124,7 @@ class PointingAlgorithms:
         ok = (np.dot(delta, lookvector) > 0.0) and (altitude > -5000.0)
         if (ok):
             G = self.apply_roll_control(lookvector, targetlocation, observer, roll_control, roll_angle_degrees)
-            self.platform.platform_pointing.force_pcf_rotation_matrix(G)
+            self.platform.acs.force_pcf_rotation_matrix(G)
         else:
             logging.warning("PointingAlgorithms.set_limb_boresight_from_lookvector, the tangent point is not in front of the observer or is more than 5000m below the ground [{}]. It has been discarded".format(altitude))
         return ok
@@ -161,7 +161,7 @@ class PointingAlgorithms:
         if (ok):                                                                                                        # and if we are good
             lookvector /= dist                                                                                          # the normalize the lookvector
             G = self.apply_roll_control(lookvector, targetlocation, observer_location, roll_control, roll_angle_degrees)    # get the the desired unit vectors
-            self.platform.platform_pointing.force_pcf_rotation_matrix(G)                                                # and calculate the new rotation matrix from the platform control frame.
+            self.platform.acs.force_pcf_rotation_matrix(G)                                                # and calculate the new rotation matrix from the platform control frame.
         else:
             logging.warning("PointingAlgorithms.set_boresight_to_look_at_geocentric_location, the target location is located within 10 cm of the observer. It is too close. It has been discarded")
         return ok
@@ -182,7 +182,7 @@ class PointingAlgorithms:
         Returns:
           bool: True if successful.
         """
-        self.platform.platform_pointing.force_pcf_rotation_matrix(G)
+        self.platform.acs.force_pcf_rotation_matrix(G)
         return True
 
     # ------------------------------------------------------------------------------
@@ -227,7 +227,7 @@ class PointingAlgorithms:
         horiz = math.cos(bearing) * north + math.sin(bearing) * east
         look = math.cos(theta) * horiz + math.sin(theta) * up
         G = self.apply_roll_control(look, observer, observer, roll_control, roll_angle_degrees, horizontalunitvector=horiz)
-        self.platform.platform_pointing.force_pcf_rotation_matrix(G)
+        self.platform.acs.force_pcf_rotation_matrix(G)
         return True
 
     # ------------------------------------------------------------------------------

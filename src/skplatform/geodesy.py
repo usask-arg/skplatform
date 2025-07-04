@@ -193,14 +193,6 @@ class Geodetic():
         is numerically comparable to exact solutions operating, which provide solutions at the nanometer level of precision, but
         struggle to solve the cubic equations with any higher precision.
 
-        Notes
-        -----
-        The algorithm is based upon the ``GCONV2H`` subroutine provided in file ``xgconv2.txt`` which is provided by Toshio Fukushima, `[1]`_
-        on his ResearchGate site.
-
-        The code is implemented to efficiently convert a multi-dimensional array of positions in one pass of the routine.
-
-        ..  [1] Fukushima, T., "Transformation from Cartesian to geodetic coordinates accelerated by Halley's method", J.Geodesy (2006) 79: 689-693
 
         Parameters
         ----------
@@ -215,12 +207,25 @@ class Geodetic():
             but the last dimensions, which is still size 3, is now used for the geodetic coordinates latitude=0, longitude = 1, height =2.
             latitude is given in degrees, -90.0 to +90.0, longitude is given in degrees, usually 0 to 360 (but this is not rigorously enforced),
             and height is given as meters above the geodetic surface (aka sea level)
+
+        Notes
+        -----
+        The algorithm is based upon the ``GCONV2H`` subroutine provided in file ``xgconv2.txt`` which is provided by Toshio Fukushima, [1]_
+        on his ResearchGate site.
+
+        The code is implemented to efficiently convert a multi-dimensional array of positions in one pass of the routine.
+
+        .. [1] Fukushima, T., "Transformation from Cartesian to geodetic coordinates accelerated by Halley's method", J.Geodesy (2006) 79: 689-693
         '''
 
         if type(xyz) is not np.ndarray:
             xyz = np.array(xyz, dtype=float)
         if xyz.dtype.name != 'float64':
             xyz = np.array(xyz, dtype='float')
+
+        if xyz.shape[-1] != 3:
+            raise ValueError('The last dimension of xyz must be exactly 3. Your arrays last dimension is [{}]'.format(xyz.shape[-1]))
+
         X = xyz[..., 0:1]          # Our X Y Z must be along the last axis
         Y = xyz[..., 1:2]
         Z = xyz[..., 2:3]
@@ -301,6 +306,9 @@ class Geodetic():
 
         if type(llh) is not np.ndarray:
             llh = np.array(llh, dtype=float)
+
+        if llh.shape[-1] != 3:
+            raise ValueError('The last dimension of llh must be exactly 3. Your arrays last dimension is [{}]'.format(llh.shape[-1]))
 
         lat = np.radians(llh[..., 0:1])
         lon = np.radians(llh[..., 1:2])
@@ -585,27 +593,6 @@ class Geodetic():
         shape flattening factor is iteratively applied to both fields;  it fails if they have different shapes. The
         legacy version of this function can handle  broadcasting, eg a single observer and multiple lines of sight.
 
-        Algorithm Details
-        -----------------
-        This technique performs an affine transformation (the ratio of distances
-        is preserved under the transformation) that maps the oblate spheroid into a true sphere.
-        The tangent point, using a transformed observer and look vector, is quickly found for a sphere using simple geometry.
-        The transformed tangent point can then be shifted back to the oblate spheroid system.
-
-        The technique is elegant but does have an achilles heal that we ideally need to use the oblate spheroid that goes
-        through the tangent point rather than the one that follows the Earth's surface. This results in an
-        iterative approach where the required oblate spheroid shape is estimated at the end of each iteration and the
-        fit repeated. It seems to work okay but there are currently no tests for convergence and there is no theoretical basis
-        showing that the new choice of flattening factor between iterations is correct. For example, its not even clear to me that the
-        oblate spheroid for 40 km is parallel to the oblate spheroid at the ground and that the vertical vector at the ground
-        is perpendicular to the oblate spheroid at 40 km. All of which play into the definition of tangent point.
-
-        Limitations
-        -----------
-        The lookxyz and observerxyz vector must not be parallel.  If they are, then there is a whole family
-        of solutions (probably the great circle) around the oblate spheroid. This condition is not tested for
-        and may produce very stange results.
-
         Parameters
         ----------
         observerxyz: array[...,3]
@@ -631,6 +618,28 @@ class Geodetic():
         See Also
         --------
         :meth:`xyz_tangent_point_location_legacy`
+
+        Notes
+        -----
+        This technique performs an affine transformation (the ratio of distances
+        is preserved under the transformation) that maps the oblate spheroid into a true sphere.
+        The tangent point, using a transformed observer and look vector, is quickly found for a sphere using simple geometry.
+        The transformed tangent point can then be shifted back to the oblate spheroid system.
+
+        The technique is elegant but does have an achilles heal that we ideally need to use the oblate spheroid that goes
+        through the tangent point rather than the one that follows the Earth's surface. This results in an
+        iterative approach where the required oblate spheroid shape is estimated at the end of each iteration and the
+        fit repeated. It seems to work okay but there are currently no tests for convergence and there is no theoretical basis
+        showing that the new choice of flattening factor between iterations is correct. For example, its not even clear to me that the
+        oblate spheroid for 40 km is parallel to the oblate spheroid at the ground and that the vertical vector at the ground
+        is perpendicular to the oblate spheroid at 40 km. All of which play into the definition of tangent point.
+
+        **Limitations**
+
+        The lookxyz and observerxyz vector must not be parallel.  If they are, then there is a whole family
+        of solutions (probably the great circle) around the oblate spheroid. This condition is not tested for
+        and may produce very stange results.
+
         '''
 
         F = self.F
@@ -670,29 +679,6 @@ class Geodetic():
         The code is implemented to process multiple look vectors and observer positions in one pass of the code using
         multi-dimensional arrays and broadcasting.
 
-        Algorithm Details
-        -----------------
-        Basic idea is to transform from the standard (primed) geocentric coordinate system
-        to another system such that the look vector defines the X direction, the
-        spacecraft position is a second vector that defines the plane that includes
-        the straight line ray and the center of the earth.  The new Z axis is
-        perpendicular to the plane.	Convenient because Z is exactly zero in the new
-        coordinate frame.  Also convenient is the fact that the straight line ray
-        is given by the equation y = yr  where yr is the (constant) Y coordinate
-        of the spacecraft in the new reference frame.
-
-        First find the equation of the oblate spheroid projected onto this plane.
-        Second define the tangent point as the place on the oblate spheroid that
-        is parallel to the ray direction (which is aligned in the X direction)
-
-        Transform the tangent point back to the normal coordinate system.
-
-        Limitations
-        -----------
-        The lookxyz and observerxyz vector must not be parallel.  If they are, then there is a whole family
-        of solutions (probably the great circle) around the oblate spheroid. This condition is not tested for
-        and may produce very stange results.
-
         Parameters
         ----------
         observerxyz: array[...,3]
@@ -722,6 +708,29 @@ class Geodetic():
         See Also
         --------
         :meth:`xyz_tangent_point_location`
+
+        Notes
+        -----
+        Basic idea is to transform from the standard (primed) geocentric coordinate system
+        to another system such that the look vector defines the X direction, the
+        spacecraft position is a second vector that defines the plane that includes
+        the straight line ray and the center of the earth.  The new Z axis is
+        perpendicular to the plane.	Convenient because Z is exactly zero in the new
+        coordinate frame.  Also convenient is the fact that the straight line ray
+        is given by the equation y = yr  where yr is the (constant) Y coordinate
+        of the spacecraft in the new reference frame.
+
+        First find the equation of the oblate spheroid projected onto this plane.
+        Second define the tangent point as the place on the oblate spheroid that
+        is parallel to the ray direction (which is aligned in the X direction)
+
+        Transform the tangent point back to the normal coordinate system.
+
+        **Limitations**
+
+        The lookxyz and observerxyz vector must not be parallel.  If they are, then there is a whole family
+        of solutions (probably the great circle) around the oblate spheroid. This condition is not tested for
+        and may produce very stange results.
 
         '''
 

@@ -1,1 +1,1 @@
-from .platform import Platform, PositionAndOrientationArray, PlatformLocation, PlatformPointing, RotationMatrix, UnitVectors
+from .platform import Platform, PositionAndOrientationArray, PlatformLocation, PlatformAttitudeControlSystem, RotationMatrix, UnitVectors

@@ -2,7 +2,7 @@ from typing import List, Union, Tuple
 import numpy as np
 from .optical_geometry import OpticalGeometry
 from .rotationmatrix import RotationMatrix
-from .platform_pointing import PlatformPointing
+from .platform_pointing import PlatformAttitudeControlSystem
 from .positionandorientationarray import PositionAndOrientationArray
 from .platformlocator import PlatformLocation
 from ..orientation_techniques import OrientationTechniques
@@ -48,7 +48,7 @@ class Platform():
         """
 
         # super().__init__()
-        self._platform_pointing: PlatformPointing = PlatformPointing()
+        self._acs: PlatformAttitudeControlSystem = PlatformAttitudeControlSystem()
         self._platform_location: PlatformLocation = platform_locator
         self._orientationtechniques: OrientationTechniques = OrientationTechniques()
         self._position_and_orientation_array: PositionAndOrientationArray = observation_policy if observation_policy is not None else PositionAndOrientationArray()
@@ -57,12 +57,12 @@ class Platform():
     #           platform_pointing
     # ------------------------------------------------------------------------------
     @property
-    def platform_pointing(self) -> PlatformPointing:
+    def acs(self) -> PlatformAttitudeControlSystem:
         """
         Gets the internal :class:`~.PlatformPointing` object. This object manages all the rotation matrices used to
         transform between various frames.
         """
-        return self._platform_pointing
+        return self._acs
 
     # ------------------------------------------------------------------------------
     #           platform_locator
@@ -174,9 +174,9 @@ class Platform():
             of the platform. The array specifies the azimuth, elevation and roll of the instrument boresight in the :ref:`icf`.
             The array is a sequence or array that can be sensibly coerced into an array of size (N,2) or (N,3) where N is the number of measurements.
             N can be 1 in which case the array size is broadcast to match the number of measurements inferred from the other parameters. Elements [:,0] is the azimuth in degrees  of the
-            instrument boresight in the instrument control frame, left handed rotation around :math:`\\hat{z}_{ICF}`. Elements [:,1] are the elevation in
-            degrees of the instrument boresight in the instrument control frame, left handed rotation around the rotated :math:`\\hat{y}_{ICF}` axis.
-            Elements[:,2], which are are optional, are the roll of the instrument boresight in degrees, right handed rotation around the rotated  :math:`\\hat{x}_{ICF}` axis.
+            instrument boresight in the instrument control frame, left handed rotation around :math:`\\hat{z}_{icf}`. Elements [:,1] are the elevation in
+            degrees of the instrument boresight in the instrument control frame, left handed rotation around the rotated :math:`\\hat{y}_{icf}` axis.
+            Elements[:,2], which are are optional, are the roll of the instrument boresight in degrees, right handed rotation around the rotated  :math:`\\hat{x}_{icf}` axis.
             The roll defaults to 0.0 if not supplied.
         """
         self._orientationtechniques.add_measurement_set(utc, platform_position, platform_orientation, icf_orientation=icf_orientation)
@@ -231,7 +231,7 @@ class Platform():
             The number of samples in the current observation policy
 
         """
-        return self._position_and_orientation_array.add_current_state(self._platform_pointing)
+        return self._position_and_orientation_array.add_current_state(self._acs)
 
     # -----------------------------------------------------------------------------
     #               clear_states(self):

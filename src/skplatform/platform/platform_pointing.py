@@ -10,7 +10,7 @@ from ..geodesy import Geodetic
 # -----------------------------------------------------------------------------
 #           Class PlatformPointing
 # -----------------------------------------------------------------------------
-class PlatformPointing:
+class PlatformAttitudeControlSystem:
 
     """
     A class used to manage the pointing requirements of an **instrument** mounted on a **platform**. The primary objective
@@ -35,7 +35,6 @@ class PlatformPointing:
         self._LCF_to_PCF: RotationMatrix = RotationMatrix()                                                             # Rotation Matrix from Instrument Control Frame to Platform Control Frame. Applies monutnig information
         self._PCF_to_GCF: RotationMatrix = RotationMatrix()                                                             # Rotation Matrix from Platform Control Frame to Geodetic Control Frame. E.G. Applies the Yaw, Pitch, Roll to orient the platform in local geodetic space.
         self._GCF_to_ECEF: RotationMatrix = RotationMatrix()                                                            # Rotation Matrix to convert local geodetic coordinates to geographic geocentric. ECEF
-        self._utc: np.datetime64 = None                                                                                 #: Platform pointing also stores the UTC time as a convenience
         self._geo: Geodetic = Geodetic()                                                                                #: An instance of Geodetic object.
         self._geolocation: np.ndarray = np.zeros([3])
         self._local_west: np.ndarray = None
@@ -63,12 +62,12 @@ class PlatformPointing:
         Rotation are applied in the order Z, Y, X rotations in the order, azimuth first, elevation second and
         roll third,
 
-        * azimuth is 0.0 when :math:`\\hat{x}_{ICF}` is pointing along the fuselage towards the nose,  i.e. it is parallel to :math:`\\hat{x}_{PCF}`. It is positive towards startboard (right hand).
-        * elevation is 0.0 along the fuselage towards the nose when :math:`\\hat{x}_{ICF}` is parallel to :math:`\\hat{x}_{PCF}` and :math:`\\hat{z}_{ICF}` is pointing upwards. It is positive as :math:`\\hat{x}_{ICF}` tilts upwards.
-        * roll is 0.0 when :math:`\\hat{y}_{ICF}` is parallel to the wings pointing to port-side (left) and is anti-parallel to :math:`\\hat{y}_{PCF}`. It is positive as :math:`\\hat{y}_{ICF}` tilts upwards and the aircraft leans to the right.
+        * azimuth is 0.0 when :math:`\\hat{x}_{icf}` is pointing along the fuselage towards the nose,  i.e. it is parallel to :math:`\\hat{x}_{PCF}`. It is positive towards startboard (right hand).
+        * elevation is 0.0 along the fuselage towards the nose when :math:`\\hat{x}_{icf}` is parallel to :math:`\\hat{x}_{PCF}` and :math:`\\hat{z}_{icf}` is pointing upwards. It is positive as :math:`\\hat{x}_{icf}` tilts upwards.
+        * roll is 0.0 when :math:`\\hat{y}_{icf}` is parallel to the wings pointing to port-side (left) and is anti-parallel to :math:`\\hat{y}_{PCF}`. It is positive as :math:`\\hat{y}_{icf}` tilts upwards and the aircraft leans to the right.
 
         The instrument control frame is initally configured so the instrument is mounted with azimuth, elevation and roll
-        all equal to 0:  :math:`\\hat{x}_{ICF}` is parallel to :math:`\\hat{x}_{PCF}` and :math:`\\hat{z}_{ICF}` is
+        all equal to 0:  :math:`\\hat{x}_{icf}` is parallel to :math:`\\hat{x}_{PCF}` and :math:`\\hat{z}_{icf}` is
         anti-parallel to :math:`\\hat{z}_{PCF}`
 
         Parameters:
@@ -79,7 +78,7 @@ class PlatformPointing:
              The elevation of the instrument boresight in the platform control frame in degrees. Elevation is
              0.0 along the fuselage towards the nose and increases in the upward direction.
           roll_degrees : array[N] or float
-             The right-handed roll in degrees of the instrument around the final resting point of the boresight, :math:`\\hat{x}_{ICF}`, in the platform control frame. The rotation
+             The right-handed roll in degrees of the instrument around the final resting point of the boresight, :math:`\\hat{x}_{icf}`, in the platform control frame. The rotation
              is a right-handed roll around the final. Default is 0.0
         """
 
@@ -93,19 +92,19 @@ class PlatformPointing:
                                  elevation_degrees: Union[np.ndarray, float],
                                  roll_degrees: Union[np.ndarray, float] = 0.0):
         """
-        Sets the instrument rotation matrix so it rotates the instrument control frame, :math:`(\\hat{x}_{ICF}, \\hat{y}_{ICF}, \\hat{z}_{ICF})`,
+        Sets the instrument rotation matrix so it rotates the instrument control frame, :math:`(\\hat{x}_{icf}, \\hat{y}_{icf}, \\hat{z}_{icf})`,
         through the given azimuth, elevation and roll angles. This method is intended to simulate tilting mirrors and rotation stages
         attached to the instrument. The rotation is applied in the order, azimuth, elevation, roll.
 
         Parameters:
           azimuth_degrees : array[N] or float
              The azimuth of the instrument boresight in the platform control frame in degrees. Azimuth is left handed rotation
-             around :math:`\\hat{z}_{ICF}`.
+             around :math:`\\hat{z}_{icf}`.
           elevation_degrees : array[N] or float
              The elevation of the instrument boresight in the platform control frame in degrees. Elevation is
-             a left-handed rotation around :math:`\\hat{y}_{ICF}`.
+             a left-handed rotation around :math:`\\hat{y}_{icf}`.
           roll_degrees : array[N] or float
-             The roll in degrees of the instrument. It is a right-handed rotation around :math:`\\hat{x}_{ICF}`. Default is 0.0
+             The roll in degrees of the instrument. It is a right-handed rotation around :math:`\\hat{x}_{icf}`. Default is 0.0
         """
 
         self._ICF_to_LCF = RotationMatrix.from_azimuth_elevation_roll(np.radians(azimuth_degrees), np.radians(elevation_degrees), np.radians(roll_degrees))
@@ -149,8 +148,8 @@ class PlatformPointing:
     #           update_location
     # ------------------------------------------------------------------------------
     def set_platform_location(self,
-                              xyzt: Tuple[Union[np.ndarray, float], Union[np.ndarray, float], Union[np.ndarray, float], Union[np.ndarray, np.datetime64]] = None,
-                              latlonheightandt: Tuple[Union[np.ndarray, float], Union[np.ndarray, float], Union[np.ndarray, float], Union[np.ndarray, np.datetime64]] = None):
+                              xyz:  Union[np.ndarray, Tuple[float, float, float]] = None,
+                              latlonheight: Union[np.ndarray, Tuple[float, float, float]] = None):
         """
         Sets the location and time of the platform to the given location and time. The methods supports setting just one location
         or an array of locations. The array option allows it to be used reasonably efficiently for instruments or simulations that need
@@ -186,28 +185,19 @@ class PlatformPointing:
 
         ok = True
 
-        if (xyzt is not None):
-            t = xyzt[3]
-            location = np.array([xyzt[0], xyzt[1], xyzt[2]])
-        elif (latlonheightandt is not None):
-            llh = np.array([latlonheightandt[0], latlonheightandt[1], latlonheightandt[2]])
-            location = self._geo.xyz_from_llh(llh)
-            t = latlonheightandt[3]
+        if (xyz is not None):
+            location = xyz
+        elif (latlonheight is not None):
+            location = self._geo.xyz_from_llh(latlonheight)
         else:
             raise ValueError("You must set either xyz or latlonheight")
+        assert (location.shape[-1] == 3)
 
-        utc = sktimeutils.ut_to_datetime64(t)
         localwest, localsouth, localup = self._geo.xyz_west_south_up(xyz=location)
-
-        isarraybased = (location.size // 3) > 1
-        if isarraybased:
-            self._GCF_to_ECEF = RotationMatrix.from_transform_to_destination_coordinates(-localwest, -localsouth, localup)
-        else:
-            self._GCF_to_ECEF = RotationMatrix.from_transform_to_destination_coordinates(-localwest, -localsouth, localup)
+        self._GCF_to_ECEF = RotationMatrix.from_transform_to_destination_coordinates(-localwest, -localsouth, localup)
 
         # Keep these defined for the moment for backward compatibility. They only make good sense wrt to scalar calls
         self._geolocation = location[:]
-        self._utc = utc
         self._local_west = localwest[:]
         self._local_south = localsouth[:]
         self._local_up = localup[:]
@@ -220,12 +210,6 @@ class PlatformPointing:
     def location(self):
         "returns the geocentric location of the platform. Only valid after a successfull call to set_platform_location"
         return self._geolocation
-
-    # -----------------------------------------------------------------------------
-    #           platform_utc
-    # -----------------------------------------------------------------------------
-    def utc(self):
-        return self._utc
 
     # -----------------------------------------------------------------------------
     #           local_west
@@ -307,9 +291,9 @@ class PlatformPointing:
           v : np.ndarray
              An array (3xN) of N vectors expressed in the instrument control frame.
 
-             * v[0,:] is the :math:`\\hat{x}_{ICF}` component of each vector,
-             * v[1,:] is the :math:`\\hat{y}_{ICF}` component,
-             * v[2,:] is the :math:`\\hat{z}_{ICF}` component.
+             * v[..., 0] is the :math:`\\hat{x}_{icf}` component of each vector,
+             * v[..., 1] is the :math:`\\hat{y}_{icf}` component,
+             * v[..., 2] is the :math:`\\hat{z}_{icf}` component.
 
         Returns:
           np.ndarray
@@ -320,7 +304,21 @@ class PlatformPointing:
             * v[2,:] is the :math:`\\hat{z}_{ECEF}` component.
         """
         R = self.get_icf_to_ecef_matrix()
-        vnew = R.R @ v
+        R = R.R
+
+        vndim = v.ndim
+        Rndim = R.ndim
+
+        if (Rndim > 2) and (vndim > 1):
+            losshape = list(v.shape[:-1])
+            lunits = list(np.ones([len(losshape)], dtype='int32'))
+            Rshape = list(R.shape[:-2]) + lunits + [3, 3]
+            R = R.reshape(Rshape)
+            vunits = list(np.ones([Rndim - 2], dtype=int))
+            vshape = vunits + list(v.shape)
+            v = v.reshape(vshape)
+
+        vnew = (R @ v[..., np.newaxis]).squeeze(axis=-1)
         return vnew
 
     # ------------------------------------------------------------------------------
@@ -336,17 +334,17 @@ class PlatformPointing:
           v : np.ndarray
              An array (3xN) of N vectors expressed in the instrument control frame.
 
-             * v[0,:] is the :math:`\\hat{x}_{ICF}` component of each vector,
-             * v[1,:] is the :math:`\\hat{y}_{ICF}` component,
-             * v[2,:] is the :math:`\\hat{z}_{ICF}` component.
+             * v[0,:] is the :math:`\\hat{x}_{icf}` component of each vector,
+             * v[1,:] is the :math:`\\hat{y}_{icf}` component,
+             * v[2,:] is the :math:`\\hat{z}_{icf}` component.
 
         Returns:
           np.ndarray
             An array (3xN) of N vectors expressed in the geodetic control frame,
 
-            * v[0,:] is the :math:`\\hat{x}_{GCF}` (West) component,
-            * v[1,:] is the :math:`\\hat{y}_{GCF}` (South) component ,
-            * v[2,:] is the :math:`\\hat{z}_{GCF}` (Up) component.
+            * v[..., 0] is the :math:`\\hat{x}_{GCF}` (West) component,
+            * v[..., 1] is the :math:`\\hat{y}_{GCF}` (South) component ,
+            * v[..., 2] is the :math:`\\hat{z}_{GCF}` (Up) component.
         """
 
         R = (self._PCF_to_GCF.R
@@ -354,7 +352,7 @@ class PlatformPointing:
              @ self._LCF_to_PCF.R
              @ self._LCF_Init_PCF.R
              @ self._ICF_to_LCF.R)
-        vnew = R @ v
+        vnew = (R @ v[..., np.newaxis]).squeeze(axis=-1)
         return vnew
 
     # -----------------------------------------------------------------------------

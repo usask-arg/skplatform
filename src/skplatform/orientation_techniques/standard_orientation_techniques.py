@@ -56,7 +56,7 @@ def _technique_set_instrument_internal_orientation(platform: 'Platform',
                                                    ut: np.datetime64,
                                                    turntable_definition: np.ndarray):
 
-    platform.platform_pointing.rotate_instrument_in_icf(turntable_definition[0], turntable_definition[1], turntable_definition[2])
+    platform.acs.rotate_instrument_in_icf(turntable_definition[0], turntable_definition[1], turntable_definition[2])
     return True
 
 
@@ -67,7 +67,7 @@ def _technique_set_platform_position_from_xyz(platform: 'Platform',
                                               ut: np.datetime64,
                                               position_definition: np.ndarray):
 
-    platform.platform_pointing.set_platform_location(xyzt=(position_definition[0], position_definition[1], position_definition[2], ut))
+    platform.acs.set_platform_location(xyzt=(position_definition[0], position_definition[1], position_definition[2], ut))
     return True
 
 
@@ -78,7 +78,8 @@ def _technique_set_platform_position_from_llh(platform: 'Platform',
                                               ut: np.datetime64,
                                               position_definition: np.ndarray) -> bool:
 
-    platform.platform_pointing.set_platform_location(latlonheightandt=(position_definition[0], position_definition[1], position_definition[2], ut))
+    platform.acs.set_platform_location(
+        latlonheight=(position_definition[0], position_definition[1], position_definition[2], ut))
     return True
 
 
@@ -120,7 +121,7 @@ def _technique_set_platform_position_from_observer_looking_at_llh(platform: 'Pla
         llh = bearingfunc._geo.llh_from_xyz(obs)
         latitude = llh[0]                                                                                               # Get the latitude of the observer location
         longitude = llh[1]                                                                                              # Get the longitude of the observer position
-        platform.platform_pointing.set_platform_location(latlonheightandt=(latitude, longitude, observer_height, ut))   # But get the height from the user defined value so it is bang on.
+        platform.acs.set_platform_location(latlonheight=(latitude, longitude, observer_height, ut))   # But get the height from the user defined value so it is bang on.
     if not converged:
         logging.warning('technique_set_platform_position_from_observer_looking_at_llh, cannot find observer position that matches the bearing requiremenets')
     return converged
@@ -141,7 +142,7 @@ def _technique_set_platform_position_from_platform(platform: 'Platform',
         position = platform.platform_locator.update_position(utc)
         ok = position is not None
         if (ok):
-            platform.platform_pointing.set_platform_location(xyzt=(position[0], position[1], position[2], ut))
+            platform.acs.set_platform_location(xyzt=(position[0], position[1], position[2], ut))
     return ok
 
 
@@ -153,7 +154,7 @@ def _technique_set_look_vectors_from_tangent_altitude(pointing_algorithm: 'Point
                                                       roll_control: str) -> bool:
 
     platform = pointing_algorithm.platform
-    observer = platform.platform_pointing.location()
+    observer = platform.acs.location()
     tangent_altitude = look_vector_definition[0]
     geographic_bearing_degrees = look_vector_definition[1]
     roll_angle = look_vector_definition[2] if look_vector_definition.size == 3 else 0.0
@@ -167,7 +168,7 @@ def _technique_set_limb_look_vectors_from_unit_xyz(pointing_algorithm: 'Pointing
                                                    look_vector_definition: np.ndarray,
                                                    roll_control: str) -> bool:
 
-    observer = pointing_algorithm.platform.platform_pointing.location()
+    observer = pointing_algorithm.platform.acs.location()
     look = look_vector_definition[0:3]
     roll_angle = look_vector_definition[3] if look_vector_definition.size == 4 else 0.0
     return pointing_algorithm.set_limb_boresight_from_lookvector(observer, look, roll_control, roll_angle)
@@ -180,7 +181,7 @@ def _technique_set_boresight_look_at_location_xyz(pointing_algorithm: 'PointingA
                                                   look_vector_definition: np.ndarray,
                                                   roll_control: str) -> bool:
     platform = pointing_algorithm.platform
-    observer = platform.platform_pointing.location()
+    observer = platform.acs.location()
     target = look_vector_definition[0:3]
     roll_angle = look_vector_definition[3] if look_vector_definition.size == 4 else 0.0
     return pointing_algorithm.set_boresight_to_look_at_geocentric_location(observer, target, roll_control, roll_angle)
@@ -194,7 +195,7 @@ def _technique_set_boresight_look_at_location_llh(pointing_algorithm: 'PointingA
                                                   roll_control: str) -> bool:
 
     platform = pointing_algorithm.platform
-    observer = platform.platform_pointing.location()
+    observer = platform.acs.location()
     latitude = look_vector_definition[0]
     longitude = look_vector_definition[1]
     height = look_vector_definition[2]
@@ -227,7 +228,7 @@ def _technique_set_observer_to_look_in_azi_elev(pointing_algorithm: 'PointingAlg
                                                 roll_control: str) -> bool:
 
     platform = pointing_algorithm.platform
-    observer = platform.platform_pointing.location()
+    observer = platform.acs.location()
     azimuth = look_vector_definition[0]
     elevation = look_vector_definition[1]
     roll_angle = look_vector_definition[2] if look_vector_definition.size == 3 else 0.0
@@ -241,7 +242,7 @@ def _technique_set_platform_pointing_from_platform(pointing_algorithm: 'Pointing
                                                    look_vector_definition: np.ndarray,
                                                    roll_control: str) -> bool:
     platform = pointing_algorithm.platform
-    utc = platform.platform_pointing.utc()
+    utc = platform.acs.utc()
     locator = platform.platform_locator
     ok = locator is not None
     if not ok:
@@ -290,7 +291,7 @@ def _technique_set_icf_orientation_from_azi_elev(platform: 'Platform', azielevda
     azimuth = azielevdata[0]
     elevation = azielevdata[1]
     roll = azielevdata[2] if azielevdata.size == 3 else 0
-    platform.platform_pointing.rotate_instrument_in_icf(azimuth, elevation, roll)
+    platform.acs.rotate_instrument_in_icf(azimuth, elevation, roll)
     return True
 
 
@@ -308,5 +309,5 @@ def _technique_set_icf_look_from_xyz(platform: 'Platform', xyz_data: np.ndarray)
 # ------------------------------------------------------------------------------
 def _technique_set_icf_orientation_no_operation(platform: 'Platform', xyz_data: np.ndarray) -> bool:
 
-    platform.platform_pointing.reset_icf_rotation_matrices()
+    platform.acs.reset_icf_rotation_matrices()
     return True

@@ -4,7 +4,7 @@ import logging
 import sktimeutils
 from .optical_geometry import OpticalGeometry
 from .rotationmatrix import RotationMatrix
-from .platform_pointing import PlatformPointing
+from .platform_pointing import PlatformAttitudeControlSystem
 
 
 # -----------------------------------------------------------------------------
@@ -109,7 +109,7 @@ class PositionAndOrientationArray:
     #           add_current_state
     # -----------------------------------------------------------------------------
 
-    def add_current_state(self, platform_attitude: PlatformPointing) -> int:
+    def add_current_state(self, platform_attitude: PlatformAttitudeControlSystem) -> int:
         """
         Adds the current state of the platform to the observation policy. A typical scenario is for the end-user to
         set the position, orientation and time of the platform using one of many available methods and to then capture the
@@ -171,7 +171,7 @@ class PositionAndOrientationArray:
             A three element storing (0) the observer ECEF X,Y,Z position, (1) the ECEF look vector away from the instrument/platform  and (2) the UT ttime
         """
         if icf_lookvectors is None:
-            icf_lookvectors = np.ndarray([[1.0], [0.0], [0.0]])
+            icf_lookvectors = np.array([[1.0], [0.0], [0.0]])
 
         if type(icf_lookvectors) is not np.ndarray:
             icf_lookvectors = np.array(icf_lookvectors)

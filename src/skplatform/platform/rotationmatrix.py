@@ -37,13 +37,13 @@ class RotationMatrix:
 
     def __init__(self, array: Union[List[List[float]], np.ndarray] = None):
 
-        self._R: np.ndarray = None
-        self._R: np.ndarray = RotationMatrix.IUnit() if array is None else np.array(array, dtype='float64')            #: The rotation matiopn. By default it is the Unit Identity matrix *"i.e. no effect"
-        self._arraybased = False
-        if (array is None):
-            self._R = RotationMatrix.IUnit()
+        if type(array) is np.ndarray:
+            R = array
+        elif array is None:
+            R = RotationMatrix.IUnit()
         else:
-            self._R = array
+            R = np.array(array, dtype='float64')
+        self._R: np.ndarray = R
 
     # -----------------------------------------------------------------------------
     #               __matmul__
@@ -72,29 +72,6 @@ class RotationMatrix:
         else:
             rinv = np.transpose(self._R, axes=(0, n - 1, n - 2))
         return rinv
-
-    # -----------------------------------------------------------------------------
-    #               _numpoints_in_mustbearrayargs
-    # -----------------------------------------------------------------------------
-    @staticmethod
-    def _numpoints_in_mustbearrayargs(arguments: Tuple[Union[np.ndarray, float], ...]):
-        '''
-        Given a list of 1-D arrays and/or scalar numbers find the size of the 1-D arrays. All the arrays in the list
-        should have the same size and must not be 0.
-        '''
-
-        N = 1
-        arraybased = False
-        for arg in arguments:
-            if arg.ndim > 1:
-                arraybased = True
-                n = arg.shape[0]
-                if (n != 1):
-                    if (N == 1):
-                        N = n
-                    assert (n == N)
-
-        return N, arraybased
 
     # -----------------------------------------------------------------------------
     #               _numpoints_in_args
@@ -192,17 +169,15 @@ class RotationMatrix:
             unit vectors in :math:`\\boldsymbol{B}`.
 
         """
-        N, isarraybased = RotationMatrix._numpoints_in_mustbearrayargs((ax, ay, ax))
-        if (isarraybased):
-            R = np.empty([N, 3, 3], dtype='float64')
-            R[:, :, 0] = ax
-            R[:, :, 1] = ay
-            R[:, :, 2] = az
-        else:
-            R = np.empty([3, 3], dtype='float64')
-            R[:, 0] = ax
-            R[:, 1] = ay
-            R[:, 2] = az
+        ok = (ax.shape == ay.shape) and (ax.shape == az.shape) and (ax.shape[-1] == 3)
+        if not ok:
+            raise ValueError('The inpout matrices must be the same shape and the last dimension must be 3.')
+
+        s = list(ax.shape[:-1]) + [3, 3]
+        R = np.empty(s, dtype='float64')
+        R[..., :, 0] = ax
+        R[..., :, 1] = ay
+        R[..., :, 2] = az
         return RotationMatrix(R)
 
     # -----------------------------------------------------------------------------

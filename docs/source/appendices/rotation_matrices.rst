@@ -9,14 +9,14 @@ Intrinsic and Extrinsic
 -----------------------
 The purpose of a rotation matrix is to rotate a vector to produce a new vector. This immediately opens up two common options:
 
-    #. **Extrinsic**: hold the coordinate axes constant and rotate the given vector. The final vector is expressed in terms of the fixed axes.
-    #. **Intrinsic**: hold the vector constant in the original coordinate system and rotate the coordinate axes to a new set of axes. The final vector is the original vector expressed in the new rotated corodinate system.
+#. **Extrinsic**: hold the coordinate axes constant and rotate the given vector. The final vector is expressed in terms of the fixed axes.
+#. **Intrinsic**: hold the vector constant in the original coordinate system and rotate the coordinate axes to a new set of axes. The final vector is the original vector expressed in the new rotated corodinate system.
 
 `Wikipedia Davenport Chained Rotations <https://en.wikipedia.org/wiki/Davenport_chained_rotations>`_ and `Wikipedia Euler Angles <https://en.wikipedia.org/wiki/Euler_angles>`_ describe the two rotations in much more detail.
 
 Both types of rotation have application within ``skplatform``.
 
-For example, specifying instrument look vectors in the :ref:`icf` are easily visualized using extrinsic rotations while orientian of the :ref:`pcf` using  yaw,
+For example, specifying instrument look vectors in the :ref:`icf` are easily visualized using extrinsic rotations while orientatian of the :ref:`pcf` using  yaw,
 pitch and roll is best suited for intrinsic rotations.
 
 Extrinsic Rotation Matrix
